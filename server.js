@@ -23,6 +23,14 @@ app.use('/api/subjects', subjectRoutes);
 const subjectAllocationRoutes = require('./routes/academic/subjectAllocationRoutes');
 app.use('/api/allocations', subjectAllocationRoutes);
 
+const syllabusRoutes = require('./routes/academic/syllabusRoutes');
+app.use('/api/syllabus', syllabusRoutes);
+
+const timetableRoutes = require('./routes/academic/timeTableRoutes');
+app.use('/api/timetables', timetableRoutes);
+
+
+
 
 
 
