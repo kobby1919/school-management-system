@@ -10,15 +10,35 @@ exports.getAllSubjects = async (req, res) => {
   }
 };
 
-exports.createSubject = async (req, res) => {
+exports.getSubjectsByGroup = async (req, res) => {
   try {
-    const newSubject = new Subject(req.body);
-    await newSubject.save();
-    res.status(201).json(newSubject);
-  } catch (err) {
-    res.status(400).json({ message: "Error creating subject", error: err });
+    const group = req.params.group;
+    const subjects = await Subject.find({ group });
+    res.status(200).json(subjects);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching grouped subjects', error });
   }
 };
+
+
+
+exports.createSubject = async (req, res) => {
+  try {
+    const { name, level } = req.body;
+
+    const existing = await Subject.findOne({ name, level });
+    if (existing) {
+      return res.status(400).json({ message: 'Subject with same name and level already exists.' });
+    }
+
+    const subject = new Subject(req.body);
+    await subject.save();
+    res.status(201).json(subject);
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating subject', error });
+  }
+};
+
 
 exports.updateSubject = async (req, res) => {
   try {

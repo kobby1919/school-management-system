@@ -29,6 +29,14 @@ app.use('/api/syllabus', syllabusRoutes);
 const timetableRoutes = require('./routes/academic/timeTableRoutes');
 app.use('/api/timetables', timetableRoutes);
 
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
+const teacherRoutes = require('./routes/teacher/teacherRoutes');
+app.use('/api/teachers', teacherRoutes);
+
+
+
 
 
 

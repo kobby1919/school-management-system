@@ -1,8 +1,7 @@
-//class-management-model
 const mongoose = require('mongoose');
 
 const classSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
   level: { type: String, required: true },
   classTeacher: {
     type: mongoose.Schema.Types.ObjectId,
@@ -14,5 +13,7 @@ const classSchema = new mongoose.Schema({
     ref: 'Subject'
   }]
 }, { timestamps: true });
+
+classSchema.index({ name: 1, level: 1 }, { unique: true });
 
 module.exports = mongoose.model('Class', classSchema);

@@ -1,15 +1,25 @@
 const Timetable = require('../../models/academic/timeTable');
 
 
+
 exports.createTimetable = async (req, res) => {
   try {
+    const { class: classId, term } = req.body;
+    const existing = await Timetable.findOne({ class: classId, term });
+
+    if (existing) {
+      return res.status(400).json({
+        message: 'Timetable already exists for this class and term.'
+      });
+    }
     const timetable = new Timetable(req.body);
     await timetable.save();
+
     res.status(201).json(timetable);
   } catch (err) {
-    res.status(400).json({ message: "Error creating timetable", error: err });
+    res.status(400).json({ message: 'Error creating timetable', error: err });
   }
-}; 
+};
 
 
 exports.getAllTimetables = async (req, res) => {
@@ -19,11 +29,9 @@ exports.getAllTimetables = async (req, res) => {
       .populate('schedule.subject');
 
     const formatted = timetables.map(timetable => {
-      // Step 1: Group schedule by day
       const groupedSchedule = {};
 
       timetable.schedule.forEach(entry => {
-        // Skip invalid entries
         if (!entry.isBreak && !entry.subject) return;
 
         const day = entry.day;
@@ -39,10 +47,10 @@ exports.getAllTimetables = async (req, res) => {
         });
       });
 
-      // Step 2: Format each timetable object
+    
       return {
         _id: timetable._id,
-        class: timetable.class,     // name & level
+        class: timetable.class,     
         term: timetable.term,
         timetable: groupedSchedule
       };
