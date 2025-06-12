@@ -8,10 +8,10 @@ const classSchema = new mongoose.Schema({
     ref: 'Teacher',
     default: null
   },
-  subjects: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Subject'
-  }]
+  // subjects: [{
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: 'Subject'
+  // }]
 }, { timestamps: true });
 
 classSchema.index({ name: 1, level: 1 }, { unique: true });

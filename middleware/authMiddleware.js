@@ -19,8 +19,26 @@ const authenticateUser = async (req, res, next) => {
     req.user = user;
     next();
   } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
+    res.status(401).json({ message: 'Invalid token' }); 
   }
 };
 
-module.exports = authenticateUser;
+const adminOnly = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied. Admins only.' });
+  }
+  next();
+};
+
+const teacherOnly = (req, res, next) => {
+  if (req.user.role !== 'teacher') {
+    return res.status(403).json({ message: 'Access denied. Teachers only.' });
+  }
+  next();
+};  
+
+module.exports = {
+  authenticateUser,
+  adminOnly,
+  teacherOnly
+};

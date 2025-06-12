@@ -35,6 +35,19 @@ app.use('/api/auth', authRoutes);
 const teacherRoutes = require('./routes/teacher/teacherRoutes');
 app.use('/api/teachers', teacherRoutes);
 
+app.use('/api/attendance/teacher', require('./routes/teacher/teacherAttendanceRoutes'));
+
+app.use('/api/attendance/student', require('./routes/student/studentAttendanceRoutes'));
+
+app.use('/api/assessments', require('./routes/teacher/assessmentRoutes'));
+
+const adminRoutes = require('./routes/admin/adminRoutes');
+app.use('/api/admins', adminRoutes);
+
+
+
+
+
 
 
 

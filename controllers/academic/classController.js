@@ -2,6 +2,7 @@ const Class = require('../../models/academic/class');
 
 const Timetable = require('../../models/academic/timeTable');
 
+const SubjectAllocation = require('../../models/academic/subjectAllocation');
 
 
 exports.getAllClasses = async (req, res) => {
@@ -42,35 +43,48 @@ exports.deleteClass = async (req, res) => {
   }
 };
 
-
 exports.getClassWithTimetable = async (req, res) => {
   try {
     const classId = req.params.classId;
 
-    // Step 1: Get class details
     const classDetails = await Class.findById(classId)
-      // .populate('classTeacher', 'name email')
-      .populate('subjects');
+      .populate({
+        path: 'classTeacher',
+        select: 'name'
+      });
 
     if (!classDetails) {
       return res.status(404).json({ message: 'Class not found' });
     }
 
-    // Step 2: Get timetable for this class
+    const { subjects, ...classData } = classDetails.toObject();
+
+    const subjectAllocations = await SubjectAllocation.find({ class: classId })
+      .populate({
+        path: 'subject',
+        select: 'name code'
+      })
+      .populate({
+        path: 'teacher',
+        select: 'name'
+      });
+
+    const assignedSubjects = subjectAllocations.map(allocation => ({
+      subject: allocation.subject,
+      teacher: allocation.teacher
+    }));
+
     const timetable = await Timetable.findOne({ class: classId })
-      .populate('schedule.subject');
+      .populate({
+        path: 'schedule.subject',
+        select: 'name code'
+      });
 
-    // Step 3: Group schedule by day
-    let groupedSchedule = {};
-
+    const groupedSchedule = {};
     if (timetable) {
       timetable.schedule.forEach(entry => {
-        if (!entry.isBreak && !entry.subject) return;
-
         const day = entry.day;
-        if (!groupedSchedule[day]) {
-          groupedSchedule[day] = [];
-        }
+        if (!groupedSchedule[day]) groupedSchedule[day] = [];
 
         groupedSchedule[day].push({
           subject: entry.isBreak ? null : entry.subject,
@@ -81,9 +95,9 @@ exports.getClassWithTimetable = async (req, res) => {
       });
     }
 
-    // Step 4: Send final response
     res.status(200).json({
-      class: classDetails,
+      class: classData,
+      assignedSubjects,
       timetable: Object.keys(groupedSchedule).length > 0 ? groupedSchedule : "No timetable assigned"
     });
 
