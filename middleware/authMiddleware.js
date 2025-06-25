@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Teacher = require('../models/Teacher');
+const Class = require('../models/academic/class');
 
 const authenticateUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -23,6 +24,38 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
+/**
+ * Middleware: Allow only the class teacher to proceed.
+ * @param {'body'|'params'|'query'} classIdSource - Where to get classId from
+ */
+const classTeacherOnly = (classIdSource = 'params') => {
+  return async (req, res, next) => {
+    try {
+      const classId = req[classIdSource].classId || req[classIdSource].assignedClass;
+      if (!classId) {
+        return res.status(400).json({ message: 'Class ID is required' });
+      }
+
+      const targetClass = await Class.findById(classId);
+      if (!targetClass) {
+        return res.status(404).json({ message: 'Class not found' });
+      }
+
+      const isClassTeacher = targetClass.classTeacher?.toString() === req.user._id.toString();
+
+      if (!isClassTeacher) {
+        return res.status(403).json({ message: 'Access denied. Only class teachers can perform this action.' });
+      }
+
+      next();
+    } catch (error) {
+      console.error('Class teacher check error:', error);
+      res.status(500).json({ message: 'Server error validating class teacher access' });
+    }
+  };
+};
+
+
 const adminOnly = (req, res, next) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Access denied. Admins only.' });
@@ -37,8 +70,17 @@ const teacherOnly = (req, res, next) => {
   next();
 };  
 
+const adminOrTeacher = (req, res, next) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
+    return res.status(403).json({ message: 'Access denied. Admins or Teachers only.' });
+  }
+  next();
+};
+
 module.exports = {
   authenticateUser,
   adminOnly,
-  teacherOnly
+  teacherOnly,
+  adminOrTeacher,
+  classTeacherOnly
 };

@@ -4,9 +4,10 @@ const Student = require('../../models/student/student');
 // 1. Mark Attendance for a Student
 exports.markStudentAttendance = async (req, res) => {
   try {
-    const { student, classId, status } = req.body;
+    const { student, status } = req.body;
+    const classId = req.params.classId; // pulled from URL
 
-    // Prevent duplicate attendance on the same day
+    // Prevent duplicate attendance for same student on same day
     const alreadyMarked = await StudentAttendance.findOne({
       student,
       class: classId,
@@ -23,15 +24,15 @@ exports.markStudentAttendance = async (req, res) => {
     const record = new StudentAttendance({
       student,
       class: classId,
-      teacher: req.user._id, // from auth middleware
+      teacher: req.user._id, // Automatically pulled from auth middleware
       status
     });
 
     await record.save();
-    res.status(201).json({ message: "Student attendance marked", record });
+    res.status(201).json({ message: "Student attendance marked successfully", record });
 
   } catch (error) {
-    res.status(500).json({ message: "Error marking attendance", error });
+    res.status(500).json({ message: "Error marking student attendance", error });
   }
 };
 

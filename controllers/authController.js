@@ -75,39 +75,3 @@ exports.login = async (req, res) => {
   }
 };
 
-
-// const hashed = await bcrypt.hash('admin1234', 10);
-// console.log(hashed);
-
-
-
-// {
-//   "class": "68460c8d47a7fe8667c7ddc8",
-//   "term": "Term 1",
-//   "schedule": [
-//     {
-//       "day": "Monday",
-//       "subject": "6845c5dced685599b1c4531c",
-//       "startTime": "08:00",
-//       "endTime": "09:00"
-//     },
-//     {
-//       "day": "Monday",
-//       "isBreak": true,
-//       "startTime": "09:00",
-//       "endTime": "09:15"
-//     },
-//     {
-//       "day": "Monday",
-//       "subject": "6845c5feed685599b1c4531f",
-//       "startTime": "09:15",
-//       "endTime": "10:00"
-//     },
-//     {
-//       "day": "Tuesday",
-//       "subject": "6845c5c9ed685599b1c45319",
-//       "startTime": "08:00",
-//       "endTime": "09:00"
-//     }
-//   ]
-// }

@@ -5,11 +5,73 @@ const SubjectAllocation = require('../../models/academic/subjectAllocation');
 exports.getAllTeachers = async (req, res) => {
   try {
     const teachers = await Teacher.find().select('-password');
-    res.status(200).json(teachers);
+
+    // Fetch and attach subjects/classes for each teacher
+    const enrichedTeachers = await Promise.all(teachers.map(async (teacher) => {
+      const allocations = await SubjectAllocation.find({ teacher: teacher._id })
+        .populate('subject', 'name code')
+        .populate('class', 'name level');
+
+      const assignedSubjects = [...new Map(
+        allocations.map(allocation => [allocation.subject._id.toString(), allocation.subject])
+      ).values()];
+
+      const assignedClasses = [...new Map(
+        allocations.map(allocation => [allocation.class._id.toString(), allocation.class])
+      ).values()];
+
+      return {
+        _id: teacher._id,
+        name: teacher.name,
+        email: teacher.email,
+        role: teacher.role,
+        profileImage: teacher.profileImage,
+        assignedSubjects,
+        assignedClasses
+      };
+    }));
+
+    res.status(200).json(enrichedTeachers);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching teachers', error });
   }
 };
+
+
+//GET Teacher info(teacher only)
+exports.getMyProfile = async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.user.id).select('-password');
+    if (!teacher) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
+
+    const allocations = await SubjectAllocation.find({ teacher: teacher._id })
+      .populate('subject', 'name code')
+      .populate('class', 'name level');
+
+    const assignedSubjects = [...new Map(
+      allocations.map(allocation => [allocation.subject._id.toString(), allocation.subject])
+    ).values()];
+
+    const assignedClasses = [...new Map(
+      allocations.map(allocation => [allocation.class._id.toString(), allocation.class])
+    ).values()];
+
+    res.status(200).json({
+      _id: teacher._id,
+      name: teacher.name,
+      email: teacher.email,
+      role: teacher.role,
+      profileImage: teacher.profileImage,
+      assignedSubjects,
+      assignedClasses
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching teacher profile', error });
+  }
+};
+
 
 // GET single teacher by ID
 exports.getTeacherById = async (req, res) => {

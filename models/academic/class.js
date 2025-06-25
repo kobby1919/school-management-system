@@ -16,4 +16,11 @@ const classSchema = new mongoose.Schema({
 
 classSchema.index({ name: 1, level: 1 }, { unique: true });
 
+classSchema.pre('findOneAndDelete', async function (next) {
+  const classId = this.getQuery()['_id'];
+  await SubjectAllocation.deleteMany({ class: classId });
+  next();
+});
+
+
 module.exports = mongoose.model('Class', classSchema);
