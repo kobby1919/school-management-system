@@ -52,20 +52,4 @@ const teacherSchema = new mongoose.Schema({
 
 }, { timestamps: true});
 
-// teacherSchema.virtual('assignedSubjectsPopulated', {
-//   ref: 'SubjectAllocation',
-//   localField: '_id',
-//   foreignField: 'teacher',
-//   justOne: false,
-//   options: {
-//     populate: {
-//       path: 'subject',
-//       select: 'name code'
-//     }
-//   }
-// });
-
-// toJSON: { virtuals: true }, toObject: { virtuals: true }
-
-
 module.exports = mongoose.model('Teacher', teacherSchema,);

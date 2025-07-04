@@ -21,11 +21,11 @@ router.delete('/:id', authenticateUser, adminOnly, studentController.deleteStude
 router.get(
   '/',
   authenticateUser,
-  adminOnly, // only admin can fetch all (no class filter here)
+  adminOrTeacher, // only admin can fetch all (no class filter here)
   studentController.getAllStudents
 );
 
 // Get a single student (Admins only)
-router.get('/:id', authenticateUser, adminOnly, studentController.getStudentById);
+router.get('/:id', authenticateUser, adminOrTeacher, studentController.getStudentById);
 
 module.exports = router;

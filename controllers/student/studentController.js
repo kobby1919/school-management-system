@@ -1,6 +1,7 @@
 const Student = require('../../models/student/student');
 const Class = require('../../models/academic/class');
 
+
 // 1. Create a new student
 exports.createStudent = async (req, res) => {
     try {
@@ -33,11 +34,19 @@ exports.getAllStudents = async (req, res) => {
     const total = await Student.countDocuments(); // total number of students
 
     const students = await Student.find()
+      .populate({
+        path: 'attendanceRecords',
+        select: 'date status class teacher',
+        populate: [
+          { path: 'class', select: 'name level' },
+          { path: 'teacher', select: 'name' }
+        ]
+      })
       .populate('assignedClass', 'name level')
       .sort({ fullName: 1 }) // sort alphabetically
       .skip(skip)
       .limit(limit);
-
+ 
     res.status(200).json({
       page,
       totalPages: Math.ceil(total / limit),

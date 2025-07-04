@@ -49,7 +49,7 @@ exports.getReportsByClass = async (req, res) => {
   try {
     const reports = await AssessmentReport.find({ class: req.params.classId })
       .populate('student', 'fullName') // student details (once ready)
-      .populate('teacher', 'fullName');
+      .populate('teacher', 'name');
     res.status(200).json(reports);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching reports', error });

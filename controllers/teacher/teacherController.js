@@ -1,5 +1,6 @@
 const Teacher = require('../../models/Teacher');
 const SubjectAllocation = require('../../models/academic/subjectAllocation');
+const Timetable = require('../../models/academic/timeTable');
 
 // GET all teachers (admin only)
 exports.getAllTeachers = async (req, res) => {
@@ -50,13 +51,55 @@ exports.getMyProfile = async (req, res) => {
       .populate('subject', 'name code')
       .populate('class', 'name level');
 
+    // Extract unique assigned subjects and classes
     const assignedSubjects = [...new Map(
-      allocations.map(allocation => [allocation.subject._id.toString(), allocation.subject])
+      allocations.map(a => [a.subject._id.toString(), a.subject])
     ).values()];
 
-    const assignedClasses = [...new Map(
-      allocations.map(allocation => [allocation.class._id.toString(), allocation.class])
-    ).values()];
+    const assignedClassesMap = new Map();
+
+    for (const allocation of allocations) {
+      const classId = allocation.class._id.toString();
+
+      // If we haven't handled this class yet
+      if (!assignedClassesMap.has(classId)) {
+        // Fetch the class timetable
+        const timetable = await Timetable.findOne({ class: classId })
+          .populate('schedule.subject', 'name code');
+
+        const groupedSchedule = {};
+
+        if (timetable) {
+          for (const entry of timetable.schedule) {
+            if (entry.isBreak) continue;
+
+            const subjectId = entry.subject?._id?.toString();
+            const teacherSubjects = allocations
+              .filter(a => a.class._id.toString() === classId)
+              .map(a => a.subject._id.toString());
+
+            // Show only the subjects this teacher teaches in this class
+            if (!teacherSubjects.includes(subjectId)) continue;
+
+            const day = entry.day;
+            if (!groupedSchedule[day]) groupedSchedule[day] = [];
+
+            groupedSchedule[day].push({
+              subject: entry.subject.name,
+              startTime: formatTime(entry.startTime),
+              endTime: formatTime(entry.endTime)
+            });
+          }
+        }
+
+        assignedClassesMap.set(classId, {
+          _id: allocation.class._id,
+          name: allocation.class.name,
+          level: allocation.class.level,
+          timetable: groupedSchedule
+        });
+      }
+    }
 
     res.status(200).json({
       _id: teacher._id,
@@ -65,12 +108,21 @@ exports.getMyProfile = async (req, res) => {
       role: teacher.role,
       profileImage: teacher.profileImage,
       assignedSubjects,
-      assignedClasses
+      assignedClasses: Array.from(assignedClassesMap.values())
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching teacher profile', error });
   }
 };
+
+// Helper to format time
+function formatTime(time) {
+  const [hour, minute] = time.split(':');
+  const h = parseInt(hour, 10);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 || 12;
+  return `${hour12}:${minute} ${suffix}`;
+}
 
 
 // GET single teacher by ID

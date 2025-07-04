@@ -28,10 +28,58 @@ const authenticateUser = async (req, res, next) => {
  * Middleware: Allow only the class teacher to proceed.
  * @param {'body'|'params'|'query'} classIdSource - Where to get classId from
  */
+// const classTeacherOnly = (classIdSource = 'params') => {
+//   return async (req, res, next) => {
+//     try {
+//       if (req.user.role === 'admin') {
+//         return next();
+//       }
+//       const classId = req[classIdSource].classId || req[classIdSource].assignedClass || req[classIdSource].class;
+//       if (!classId) {
+//         return res.status(400).json({ message: 'Class ID is required' });
+//       }
+
+//       const targetClass = await Class.findById(classId);
+//       if (!targetClass) {
+//         return res.status(404).json({ message: 'Class not found' });
+//       }
+
+//       const isClassTeacher = targetClass.classTeacher?.toString() === req.user._id.toString();
+
+//       if (!isClassTeacher) {
+//         return res.status(403).json({ message: 'Access denied. Only class teachers can perform this action.' });
+//       }
+
+//       next();
+//     } catch (error) {
+//       console.error('Class teacher check error:', error);
+//       res.status(500).json({ message: 'Server error validating class teacher access' });
+//     }
+//   };
+// };
+
+
 const classTeacherOnly = (classIdSource = 'params') => {
   return async (req, res, next) => {
     try {
-      const classId = req[classIdSource].classId || req[classIdSource].assignedClass;
+      console.log('🔐 classTeacherOnly middleware running...');
+
+      if (!req[classIdSource]) {
+        console.log(`❌ req.${classIdSource} is undefined`);
+        return res.status(400).json({ message: `Missing ${classIdSource} source` });
+      }
+
+      if (req.user.role === 'admin') {
+        return next();
+      }
+
+      const classId =
+        req[classIdSource].classId ||
+        req[classIdSource].assignedClass ||
+        req[classIdSource].class;
+
+      console.log('🧠 Extracted classId:', classId);
+
       if (!classId) {
         return res.status(400).json({ message: 'Class ID is required' });
       }
@@ -41,16 +89,21 @@ const classTeacherOnly = (classIdSource = 'params') => {
         return res.status(404).json({ message: 'Class not found' });
       }
 
-      const isClassTeacher = targetClass.classTeacher?.toString() === req.user._id.toString();
+      const isClassTeacher =
+        targetClass.classTeacher?.toString() === req.user._id.toString();
+
+      console.log('✅ isClassTeacher:', isClassTeacher);
 
       if (!isClassTeacher) {
-        return res.status(403).json({ message: 'Access denied. Only class teachers can perform this action.' });
+        return res.status(403).json({
+          message: 'Access denied. Only class teachers can perform this action.',
+        });
       }
 
       next();
-    } catch (error) {
-      console.error('Class teacher check error:', error);
-      res.status(500).json({ message: 'Server error validating class teacher access' });
+    } catch (err) {
+      console.error('❌ Middleware crash:', err);
+      res.status(500).json({ message: 'Server error in classTeacherOnly', error: err.message });
     }
   };
 };

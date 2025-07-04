@@ -11,5 +11,4 @@ router.put('/:id', authenticateUser, adminOnly, teacherController.updateTeacher)
 router.delete('/:id', authenticateUser, adminOnly, teacherController.deleteTeacher);
 router.put('/:id/assign', authenticateUser, adminOnly, teacherController.assignClassAndSubjects);
 
-
 module.exports = router;
