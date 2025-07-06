@@ -56,6 +56,19 @@ app.use('/api/admins', adminRoutes);
 
 app.use('/api/students', require('./routes/student/studentRoutes'));
 
+app.use('/api/parents', require('./routes/parent/parentRoutes'));
+
+app.use('/api/notices', require('./routes/portal/noticeRoutes'));
+
+app.use('/api/exams', require('./routes/academic/examScheduleRoutes'));
+
+const financeRoutes = require('./routes/finance/feeRoutes');
+app.use('/api/finance', financeRoutes);
+
+
+
+
+
 
 
 // {

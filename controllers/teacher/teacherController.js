@@ -125,6 +125,70 @@ function formatTime(time) {
 }
 
 
+exports.getTeacherDashboard = async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.user._id)
+      .select('-password')
+      .populate('assignedClass', 'name level')
+      .populate('assignedSubjects', 'name code');
+
+    if (!teacher) return res.status(404).json({ message: 'Teacher not found' });
+
+    // Fetch students in the class they teach (if any)
+    let students = [];
+    if (teacher.assignedClass) {
+      students = await Student.find({ assignedClass: teacher.assignedClass._id })
+        .select('fullName admissionNumber gender');
+    }
+
+    // Timetable (from assignedClass)
+    let timetable = {};
+    if (teacher.assignedClass) {
+      const Timetable = require('../../models/academic/timeTable');
+      const timetableDoc = await Timetable.findOne({ class: teacher.assignedClass._id })
+        .populate('schedule.subject', 'name');
+
+      if (timetableDoc) {
+        timetableDoc.schedule.forEach(entry => {
+          if (!entry.isBreak && entry.subject) {
+            const day = entry.day;
+            if (!timetable[day]) timetable[day] = [];
+            timetable[day].push({
+              subject: entry.subject.name,
+              startTime: entry.startTime,
+              endTime: entry.endTime
+            });
+          }
+        });
+      }
+    }
+
+    // Recent assessment reports (last 5)
+    const reports = await AssessmentReport.find({ teacher: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('student', 'fullName')
+      .populate('class', 'name level');
+
+    res.status(200).json({
+      profile: {
+        name: teacher.name,
+        email: teacher.email,
+        role: teacher.role,
+        assignedClass: teacher.assignedClass,
+        assignedSubjects: teacher.assignedSubjects
+      },
+      students,
+      timetable,
+      recentReports: reports
+    });
+  } catch (error) {
+    console.error('Error building teacher dashboard:', error);
+    res.status(500).json({ message: 'Error loading dashboard', error });
+  }
+};
+
+
 // GET single teacher by ID
 exports.getTeacherById = async (req, res) => {
   try {

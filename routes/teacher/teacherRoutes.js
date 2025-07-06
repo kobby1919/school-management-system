@@ -5,6 +5,7 @@ const { authenticateUser, adminOnly, teacherOnly } = require('../../middleware/a
 
 // Protected routes for teacher management
 router.get('/', authenticateUser, adminOnly, teacherController.getAllTeachers);
+router.get('/dashboard', authenticateUser, teacherOnly, teacherController.getTeacherDashboard);
 router.get('/me', authenticateUser, teacherOnly, teacherController.getMyProfile);
 router.get('/:id', authenticateUser, adminOnly, teacherController.getTeacherById);
 router.put('/:id', authenticateUser, adminOnly, teacherController.updateTeacher);
