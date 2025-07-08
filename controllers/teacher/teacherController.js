@@ -13,14 +13,19 @@ exports.getAllTeachers = async (req, res) => {
         .populate('subject', 'name code')
         .populate('class', 'name level');
 
-      const assignedSubjects = [...new Map(
-        allocations.map(allocation => [allocation.subject._id.toString(), allocation.subject])
-      ).values()];
+        const assignedSubjects = [...new Map(
+          allocations
+            .filter(allocation => allocation.subject && allocation.subject._id)
+            .map(allocation => [allocation.subject._id.toString(), allocation.subject])
+        ).values()];
+        
 
-      const assignedClasses = [...new Map(
-        allocations.map(allocation => [allocation.class._id.toString(), allocation.class])
-      ).values()];
-
+        const assignedClasses = [...new Map(
+          allocations
+            .filter(allocation => allocation.class && allocation.class._id)
+            .map(allocation => [allocation.class._id.toString(), allocation.class])
+        ).values()];
+        
       return {
         _id: teacher._id,
         name: teacher.name,
@@ -34,7 +39,8 @@ exports.getAllTeachers = async (req, res) => {
 
     res.status(200).json(enrichedTeachers);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching teachers', error });
+    console.error('❌ Teacher Fetch Error:', error);
+    res.status(500).json({ message: 'Error fetching teachers', error: error.message });
   }
 };
 

@@ -1,5 +1,8 @@
-
 const mongoose = require('mongoose');
+const StudentAttendance = require('./studentAttendance');
+const FeeRecord = require('../finance/feeRecord');
+const PaymentLog = require('../finance/paymentLog');
+const Parent = require('../parent/parent');
 
 const studentSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
@@ -27,5 +30,24 @@ const studentSchema = new mongoose.Schema({
     ref: 'StudentAttendance'
   }]
 }, { timestamps: true });
+
+studentSchema.pre('findOneAndDelete', async function (next) {
+  const studentId = this.getQuery()['_id'];
+
+  // Delete attendance records
+  await StudentAttendance.deleteMany({ student: studentId });
+
+  // Delete fee records and payments
+  await FeeRecord.deleteMany({ student: studentId });
+  await PaymentLog.deleteMany({ student: studentId });
+
+  // Remove from parents
+  await Parent.updateMany(
+    { children: studentId },
+    { $pull: { children: studentId } }
+  );
+
+  next();
+});
 
 module.exports = mongoose.model('Student', studentSchema);
