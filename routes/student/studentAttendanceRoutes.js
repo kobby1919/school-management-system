@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const attendanceController = require('../../controllers/student/studentAttendanceController');
-const { authenticateUser, adminOnly, teacherOnly, classTeacherOnly } = require('../../middleware/authMiddleware');
+const { authenticateUser, adminOnly, adminOrTeacher, teacherOnly, classTeacherOnly } = require('../../middleware/authMiddleware');
 
 // POST: Mark student attendance (Only class teacher of classId can do this)
 router.post(
@@ -16,7 +16,8 @@ router.post(
 router.get(
   '/class/:classId',
   authenticateUser,
-  adminOnly, // you can also add classTeacherOnly here if needed
+  adminOrTeacher,
+  classTeacherOnly('params'),
   attendanceController.getAttendanceByClassAndDate
 );
 
