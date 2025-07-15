@@ -66,3 +66,34 @@ exports.getMyChildren = async (req, res) => {
     res.status(500).json({ message: 'Error fetching children', error });
   }
 };
+
+
+
+exports.getAllParents = async (req, res) => {
+  try {
+    const parents = await Parent.find().select('-password');
+    res.status(200).json(parents);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching parents', error: err.message });
+  }
+};
+
+exports.updateParent = async (req, res) => {
+  try {
+    const parent = await Parent.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-password');
+    if (!parent) return res.status(404).json({ message: 'Parent not found' });
+    res.status(200).json(parent);
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating parent', error: err.message });
+  }
+};
+
+exports.deleteParent = async (req, res) => {
+  try {
+    const deleted = await Parent.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Parent not found' });
+    res.status(200).json({ message: 'Parent deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error deleting parent', error: err.message });
+  }
+};
