@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Parent = require('../../models/parent/parent');
 const Student = require('../../models/student/student');
+const ExamTimetable = require('../../models/academic/examSchedule');
+
 
 exports.registerParent = async (req, res) => {
   try {
@@ -48,6 +50,7 @@ exports.loginParent = async (req, res) => {
   }
 };
 
+
 exports.getMyChildren = async (req, res) => {
   try {
     const parent = await Parent.findById(req.user.id).populate({
@@ -55,15 +58,38 @@ exports.getMyChildren = async (req, res) => {
       populate: { path: 'assignedClass', select: 'name level' }
     });
 
-    if (!parent) return res.status(404).json({ message: 'Parent not found' });
+    if (!parent) {
+      return res.status(404).json({ message: 'Parent not found' });
+    }
+
+    // Build response: for each child, also fetch exam schedules
+    const childrenWithExams = await Promise.all(
+      parent.children.map(async (child) => {
+        let examSchedules = [];
+
+        if (child.assignedClass?._id) {
+          examSchedules = await ExamTimetable.find({ class: child.assignedClass._id })
+            .populate('schedule.exams.subject', 'name code')
+            .sort({ weekStartDate: 1 });
+        }
+
+        return {
+          _id: child._id,
+          fullName: child.fullName,
+          assignedClass: child.assignedClass,
+          examSchedules
+        };
+      })
+    );
 
     res.status(200).json({
       fullName: parent.fullName,
       email: parent.email,
-      children: parent.children
+      children: childrenWithExams
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching children', error });
+    console.error('Error fetching children with exam schedules:', error);
+    res.status(500).json({ message: 'Error fetching children', error: error.message });
   }
 };
 
