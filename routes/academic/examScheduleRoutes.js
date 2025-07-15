@@ -3,11 +3,12 @@ const router = express.Router();
 const controller = require('../../controllers/academic/examScheduleController');
 const { authenticateUser, adminOnly } = require('../../middleware/authMiddleware');
 
-// Admin creates/deletes
-router.post('/', authenticateUser, adminOnly, controller.createExamSchedule);
-router.delete('/:id', authenticateUser, adminOnly, controller.deleteExamSchedule);
+// Admin routes
+router.post('/', authenticateUser, adminOnly, controller.createTimetable);
+router.put('/:id', authenticateUser, adminOnly, controller.updateTimetable);
+router.delete('/:id', authenticateUser, adminOnly, controller.deleteTimetable);
 
-// Public (parent portal can fetch)
-router.get('/class/:classId', controller.getExamSchedulesByClass);
+// Public
+router.get('/class/:classId', controller.getTimetableByClass);
 
 module.exports = router;

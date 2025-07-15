@@ -8,8 +8,11 @@ router.post('/', authenticateUser, classTeacherOnly('body'), assessmentControlle
 
 router.put('/:id', authenticateUser, adminOnly, assessmentController.updateReport);
 
-router.get('/class/:classId', authenticateUser, adminOnly, assessmentController.getReportsByClass);
+router.get('/class/:classId', authenticateUser, adminOrTeacher, assessmentController.getReportsByClass);
 
-router.get('/student/:studentId', authenticateUser, classTeacherOnly('body'), assessmentController.getReportsByStudent);
+router.get('/student/:studentId', authenticateUser, adminOrTeacher, assessmentController.getReportsByStudent);
+
+router.delete('/:id', authenticateUser, adminOrTeacher, assessmentController.deleteReport);
+
 
 module.exports = router;
