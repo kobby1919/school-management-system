@@ -20,7 +20,7 @@ const parentSchema = new mongoose.Schema({
     children: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'student'
+            ref: 'Student'
         }
     ]
 }, { timestamps: true });

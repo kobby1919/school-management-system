@@ -4,7 +4,7 @@ const Student = require('../../models/student/student');
 // 1. Mark Attendance for a Student
 exports.markStudentAttendance = async (req, res) => {
   try {
-    const { student, status } = req.body;
+    const { student, status, remark } = req.body;
     const classId = req.params.classId;
 
     // Prevent duplicate attendance for same student on same day
@@ -21,12 +21,13 @@ exports.markStudentAttendance = async (req, res) => {
       return res.status(400).json({ message: "Attendance already marked for this student today." });
     }
 
-    // Create new attendance record
+    // Create new attendance record, now including remark
     const record = new StudentAttendance({
       student,
       class: classId,
       teacher: req.user._id,
-      status
+      status,
+      remark 
     });
 
     await record.save();

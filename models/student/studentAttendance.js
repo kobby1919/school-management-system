@@ -24,7 +24,9 @@ const studentAttendanceSchema = new mongoose.Schema({
     type: String,
     enum: ['Present', 'Absent'],
     required: true,
+  },
+  remark: {
+    type: String, // optional text
+    default: ''
   }
 }, { timestamps: true });
-
-module.exports = mongoose.model('StudentAttendance', studentAttendanceSchema);
