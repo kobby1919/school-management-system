@@ -93,3 +93,64 @@ exports.getStudentHistory = async (req, res) => {
 };
 
 
+exports.getStudentAttendanceStatistics = async (req, res) => {
+  try {
+    const studentId = req.params.studentId;
+
+    const records = await StudentAttendance.find({ student: studentId });
+
+    const totalMarked = records.length;
+    let present = 0, absent = 0, late = 0;
+
+    records.forEach(r => {
+      if (r.status === 'Present') present ++;
+      else if (r.status === 'Absent') absent ++;
+      else if (r.status === 'Late') late ++;
+    });
+
+    const attendancePercentage = totalMarked > 0 ? ((present + late) / totalMarked) * 100 : 0;
+    
+    res.status(200).json({
+      studentId,
+      totalMarked,
+      present,
+      absent,
+      late,
+      attendancePercentage: attendancePercentage.toFixed(2)
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching attendance statistics", error });
+  }
+};
+
+exports.getClassAttendanceStatistics = async (req, res) => {
+  try {
+    const classId = req.params.classId;
+
+    const records = await StudentAttendance.find({ class: classId });
+
+    const totalMarked = records.length;
+    let present = 0, absent = 0, late = 0;
+
+    records.forEach(r => {
+      if (r.status === 'Present') present ++;
+      else if (r.status === 'Absent') absent ++;
+      else if (r.status === 'Late') late ++;
+    });
+
+    const attendancePercentage = totalMarked > 0 ? ((present + late) / totalMarked) * 100 : 0;
+
+    res.status(200).json({
+      classId,
+      totalMarked,
+      present,
+      absent,
+      late,
+      attendancePercentage: attendancePercentage.toFixed(2) 
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching class attendance statistics", error});
+  }
+};

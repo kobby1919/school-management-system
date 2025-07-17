@@ -24,4 +24,20 @@ router.get(
 // GET: Student attendance history (Admin only)
 router.get('/:studentId/history', authenticateUser, adminOnly, attendanceController.getStudentHistory);
 
+// Student attendance stats
+router.get(
+  '/student/:studentId/statistics',
+  authenticateUser,
+  adminOrTeacher,
+  attendanceController.getStudentAttendanceStatistics
+);
+
+// Class attendance stats
+router.get(
+  '/class/:classId/statistics',
+  authenticateUser,
+  adminOrTeacher,
+  attendanceController.getClassAttendanceStatistics
+);
+
 module.exports = router;
