@@ -7,15 +7,17 @@ exports.markStudentAttendance = async (req, res) => {
     const { student, status, remark } = req.body;
     const classId = req.params.classId;
 
-    // Prevent duplicate attendance for same student on same day
+   // Prevent duplicate attendance for same student on same day
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
     const alreadyMarked = await StudentAttendance.findOne({
       student,
       class: classId,
-      date: {
-        $gte: new Date().setHours(0, 0, 0, 0),
-        $lte: new Date().setHours(23, 59, 59, 999)
-      }
+      date: { $gte: startOfDay, $lte: endOfDay }
     });
+
 
     if (alreadyMarked) {
       return res.status(400).json({ message: "Attendance already marked for this student today." });
