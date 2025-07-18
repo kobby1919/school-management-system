@@ -156,3 +156,26 @@ exports.getClassAttendanceStatistics = async (req, res) => {
     res.status(500).json({ message: "Error fetching class attendance statistics", error});
   }
 };
+
+
+// Get Student Attendance for Calendar View
+exports.getStudentAttendanceCalendar = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    const records = await StudentAttendance.find({ student: studentId })
+      .select('date status remark')  // only what we need
+      .sort({ date: 1 });           // oldest to newest
+
+    
+    const events = records.map(record => ({
+      date: record.date,
+      status: record.status,
+      remark: record.remark
+    }));
+
+    res.status(200).json(events);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching calendar attendance", error });
+  }
+};
