@@ -164,17 +164,18 @@ exports.getStudentAttendanceCalendar = async (req, res) => {
     const { studentId } = req.params;
 
     const records = await StudentAttendance.find({ student: studentId })
-      .select('date status remark')  // only what we need
-      .sort({ date: 1 });           // oldest to newest
+      .sort({ date: 1 });  // oldest first
 
-    
-    const events = records.map(record => ({
-      date: record.date,
-      status: record.status,
-      remark: record.remark
+    const calendar = records.map(r => ({
+      date: r.date.toISOString().split('T')[0],
+      status: r.status,
+      remark: r.remark
     }));
 
-    res.status(200).json(events);
+    res.status(200).json({
+      studentId,
+      calendar
+    });
   } catch (error) {
     res.status(500).json({ message: "Error fetching calendar attendance", error });
   }
