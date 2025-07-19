@@ -30,3 +30,5 @@ const studentAttendanceSchema = new mongoose.Schema({
     default: ''
   }
 }, { timestamps: true });
+
+module.exports = mongoose.model('studentAttendance', studentAttendanceSchema);
