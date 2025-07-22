@@ -1,5 +1,7 @@
 const StudentAttendance = require('../../models/student/studentAttendance');
 const Student = require('../../models/student/student');
+const Parent = require('../../models/parent/parent'); 
+const Notification = require('../../models/parent/notification');
 
 // 1. Mark Attendance for a Student
 exports.markStudentAttendance = async (req, res) => {
@@ -33,6 +35,22 @@ exports.markStudentAttendance = async (req, res) => {
     });
 
     await record.save();
+
+    if (status === 'Absent' || status === 'Late') {
+      const studentDoc = await Student.findById(student).populate('assignedClass');
+      const parents = await Parent.find({ children: student });
+    
+      const message = `Your child ${studentDoc.fullName} in class ${studentDoc.assignedClass?.name || ''} was marked as ${status}${remark ? ` (${remark})` : ''}.`;
+    
+      for (const parent of parents) {
+        await Notification.create({
+          parent: parent._id,
+          message
+        });
+        console.log(`📢 Notification sent to parent (${parent.fullName}): ${message}`);
+      }
+    }
+    
 
     await Student.findByIdAndUpdate(
       student,

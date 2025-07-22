@@ -40,4 +40,13 @@ router.get(
   attendanceController.getClassAttendanceStatistics
 );
 
+// GET: Student attendance calendar view
+router.get(
+  '/student/:studentId/calendar',
+  authenticateUser,
+  adminOrTeacher,
+  attendanceController.getStudentAttendanceCalendar
+);
+
+
 module.exports = router;
