@@ -2,6 +2,7 @@ const StudentAttendance = require('../../models/student/studentAttendance');
 const Student = require('../../models/student/student');
 const Parent = require('../../models/parent/parent'); 
 const Notification = require('../../models/parent/notification');
+const AttendanceAudit = require('../../models/student/attendanceAudit');
 
 // 1. Mark Attendance for a Student
 exports.markStudentAttendance = async (req, res) => {
@@ -198,3 +199,81 @@ exports.getStudentAttendanceCalendar = async (req, res) => {
     res.status(500).json({ message: "Error fetching calendar attendance", error });
   }
 };
+
+
+// Edit past attendance with audit
+exports.editAttendanceWithAudit = async (req, res) => {
+  try {
+    const { attendanceId } = req.params;
+    const { newStatus, newRemark } = req.body;
+
+    // Find the original attendance record
+    const record = await StudentAttendance.findById(attendanceId);
+    if (!record) {
+      return res.status(404).json({ message: 'Attendance record not found' });
+    }
+
+    // Save old values for audit
+    const oldStatus = record.status;
+    const oldRemark = record.remark;
+
+    // Update the attendance record
+    record.status = newStatus;
+    record.remark = newRemark;
+    await record.save();
+
+    // Create audit log
+    const audit = new AttendanceAudit({
+      attendanceRecord: record._id,
+      editedBy: req.user._id, // the teacher/admin who did it
+      oldStatus,
+      newStatus,
+      oldRemark,
+      newRemark
+    });
+    await audit.save();
+
+    res.status(200).json({
+      message: 'Attendance updated successfully and audit logged',
+      updatedRecord: record,
+      auditLog: audit
+    });
+
+  } catch (error) {
+    console.error('Error editing attendance:', error);
+    res.status(500).json({ message: 'Error editing attendance', error: error.message });
+  }
+};
+
+exports.getAttendanceAuditLogs = async (req, res) => {
+  try {
+    const { studentId, editedBy } = req.query;
+
+    const filter = {};
+
+    // Filter by student (via attendanceRecord's student field)
+    if (studentId) {
+      // Find all attendance records of this student
+      const studentRecords = await StudentAttendance.find({ student: studentId }).select('_id');
+      const recordIds = studentRecords.map(r => r._id);
+      filter.attendanceRecord = { $in: recordIds };
+    }
+
+    // Filter by who edited
+    if (editedBy) {
+      filter.editedBy = editedBy;
+    }
+
+    const logs = await AttendanceAudit.find(filter)
+      .populate('attendanceRecord', 'student class date')   // show student, class & date
+      .populate('editedBy', 'name role')                    // who edited
+      .sort({ createdAt: -1 });                              // latest first
+
+    res.status(200).json(logs);
+
+  } catch (error) {
+    console.error('Error fetching attendance audit logs:', error);
+    res.status(500).json({ message: 'Error fetching audit logs', error: error.message });
+  }
+};
+

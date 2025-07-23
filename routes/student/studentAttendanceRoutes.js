@@ -49,4 +49,12 @@ router.get(
 );
 
 
+router.put(
+  '/edit/:attendanceId',
+  authenticateUser,
+  adminOrTeacher,
+  attendanceController.editAttendanceWithAudit
+);
+
+
 module.exports = router;
