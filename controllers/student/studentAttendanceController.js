@@ -3,6 +3,8 @@ const Student = require('../../models/student/student');
 const Parent = require('../../models/parent/parent'); 
 const Notification = require('../../models/parent/notification');
 const AttendanceAudit = require('../../models/student/attendanceAudit');
+const PDFDocument = require('pdfkit');
+const ExcelJS = require('exceljs');
 
 // 1. Mark Attendance for a Student
 exports.markStudentAttendance = async (req, res) => {
@@ -276,4 +278,100 @@ exports.getAttendanceAuditLogs = async (req, res) => {
     res.status(500).json({ message: 'Error fetching audit logs', error: error.message });
   }
 };
+
+exports.exportClassAttendancePDF = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { date } = req.query;
+
+    // Find attendance records for class & date
+    const targetDate = new Date(date);
+    const startOfDay = new Date(targetDate.setHours(0,0,0,0));
+    const endOfDay = new Date(targetDate.setHours(23,59,59,999));
+
+    const records = await StudentAttendance.find({
+      class: classId,
+      date: { $gte: startOfDay, $lte: endOfDay }
+    }).populate('student', 'fullName admissionNumber');
+
+    // Create PDF
+    const doc = new PDFDocument();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=attendance.pdf');
+    doc.pipe(res);
+
+    // Title
+    doc.fontSize(18).text(`Class Attendance Report`, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Class ID: ${classId}`);
+    doc.text(`Date: ${date}`);
+    doc.moveDown();
+
+    // Table header
+    doc.fontSize(12).text('Student Name | Admission No | Status | Remark');
+    doc.moveDown(0.5);
+
+    // Table rows
+    records.forEach(r => {
+      doc.text(`${r.student.fullName} | ${r.student.admissionNumber} | ${r.status} | ${r.remark || '-'}`);
+    });
+
+    doc.end();
+
+  } catch (error) {
+    console.error('PDF export error:', error);
+    res.status(500).json({ message: 'Error exporting PDF', error });
+  }
+};
+
+
+exports.exportClassAttendanceExcel = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { date } = req.query;
+
+    const targetDate = new Date(date);
+    const startOfDay = new Date(targetDate.setHours(0,0,0,0));
+    const endOfDay = new Date(targetDate.setHours(23,59,59,999));
+
+    const records = await StudentAttendance.find({
+      class: classId,
+      date: { $gte: startOfDay, $lte: endOfDay }
+    }).populate('student', 'fullName admissionNumber');
+
+    // Create workbook & sheet
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Attendance');
+
+    // Header row
+    sheet.columns = [
+      { header: 'Student Name', key: 'fullName', width: 25 },
+      { header: 'Admission No', key: 'admissionNumber', width: 15 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Remark', key: 'remark', width: 30 }
+    ];
+
+    // Add rows
+    records.forEach(r => {
+      sheet.addRow({
+        fullName: r.student.fullName,
+        admissionNumber: r.student.admissionNumber,
+        status: r.status,
+        remark: r.remark || '-'
+      });
+    });
+
+    // Send file
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=attendance.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('Excel export error:', error);
+    res.status(500).json({ message: 'Error exporting Excel', error });
+  }
+};
+
 

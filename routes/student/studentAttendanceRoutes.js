@@ -56,5 +56,33 @@ router.put(
   attendanceController.editAttendanceWithAudit
 );
 
+// GET: Attendance audit logs (admin or teacher)
+router.get(
+  '/audit/logs',
+  authenticateUser,
+  adminOrTeacher,
+  attendanceController.getAttendanceAuditLogs
+);
+
+// EXPORT attendance (PDF)
+router.get(
+  '/class/:classId/export/pdf',
+  authenticateUser,
+  adminOrTeacher,
+  classTeacherOnly('params'),
+  attendanceController.exportClassAttendancePDF
+);
+
+// EXPORT attendance (Excel)
+router.get(
+  '/class/:classId/export/excel',
+  authenticateUser,
+  adminOrTeacher,
+  classTeacherOnly('params'),
+  attendanceController.exportClassAttendanceExcel
+);
+
+
+
 
 module.exports = router;

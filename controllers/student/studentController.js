@@ -26,6 +26,7 @@ exports.createStudent = async (req, res) => {
 
 // 2. Get all students with pagination
 exports.getAllStudents = async (req, res) => {
+  console.log('⚡ getAllStudents called'); 
   try {
     const page = parseInt(req.query.page) || 1;  // current page
     const limit = parseInt(req.query.limit) || 10; // records per page
@@ -54,6 +55,7 @@ exports.getAllStudents = async (req, res) => {
       students
     });
   } catch (error) {
+    console.error('❌ Error in getAllStudents:', error);
     res.status(500).json({ message: 'Error fetching students', error });
   }
 };

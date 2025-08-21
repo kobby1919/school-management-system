@@ -27,7 +27,7 @@ const studentSchema = new mongoose.Schema({
 
   attendanceRecords: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'StudentAttendance'
+    ref: 'studentAttendance'
   }]
 }, { timestamps: true });
 
@@ -50,4 +50,4 @@ studentSchema.pre('findOneAndDelete', async function (next) {
   next();
 });
 
-module.exports = mongoose.model('Student', studentSchema);
+module.exports = mongoose.model('student', studentSchema);
